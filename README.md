@@ -2,8 +2,25 @@
 explanation on solid principle with python code
 
 # System Desing
-System Design is the process of designing the elements of the system such as Architecture, Module, Components & different interfaces of those componnents, and Data flow over the system.
-the goal is the create system which is efficient, maintainable & scalable.
+System Design is the process of designing the elements of the system such as **Architecture**, **Modules**, **Components** & different **Interfaces** of those componnents, and **Data Flow** over the system — with the goal of building a system that is **efficient**, **maintainable**, and **scalable**.
+
+### 📌 Key Concepts Explained (with Examples)
+
+| Term                        | Simple Meaning                           | Example (Food Delivery App)                    |
+|-----------------------------|-------------------------------------------|------------------------------------------------|
+| **Architecture**            | Overall system blueprint                 | Microservices setup, Client-Server design      |
+| **Module**                  | Major function area                      | Login, Search, Payment                         |
+| **Component**               | Building blocks inside modules           | UPI, Wallet, Card payment components           |
+| **Interfaces of Components**| How components talk to each other        | Search takes "pizza" as input, returns results |
+| **Data Flow over System**   | How data moves between parts             | User → Search → Restaurant → Payment           |
+
+### 📈 Goals of a Good System
+
+| Term             | Meaning                        | Example in Food App                               |
+|------------------|--------------------------------|---------------------------------------------------|
+| **Efficient**     | Fast, low resource usage       | Quick search & payment                            |
+| **Maintainable**  | Easy to fix or update          | Add new payment method without breaking old ones  |
+| **Scalable**      | Grows well under more users    | Handles 1 lakh orders smoothly during a festival  |
 
 ## Types of System Design
 1. LLD (Low Level Design)
@@ -25,9 +42,10 @@ While High-Level Design (HLD) focuses on the architecture and components of the 
 5. Dependency Inversion Principle (DIP)
 
 ## Single Responsibility Principle (SRP)
-This SRP states that **“A class should have only one reason to change”** which means every class should have a single responsibility or sigle purpose. 
-following SRP makes your code more moduler,maintainable and easy to extend. for example. 
-lets suppose you are having a class CurrencyConverter which converts the Any Currency to INR. also it contains display function.
+This SRP states that **“A class should have only one reason to change”** which means every class should have a single responsibility or sigle purpose.  
+![Single Responsibility Principle](./images_png/SRP_image.png)  
+following SRP makes your code more moduler,maintainable and easy to extend. 
+Example : lets suppose you are having a class CurrencyConverter which converts the INR to Any Currency, also it contains display function.
 ```python 
 class CurrencyConvert:
     def __init__(self, rupees, curr_type):
@@ -37,14 +55,14 @@ class CurrencyConvert:
     def currency_convertor(self):
         if self.currency_type == 'Doller':
             in_doller = self.indian_rupees / 94.03
-            return in_doller, self.currency_type
+            return in_doller
         elif self.currency_type == 'Yuro':
             in_yuro = self.indian_rupees / 83.00
-            return in_yuro, self.currency_type
+            return in_yuro
         
     def display_currency(self):
-        currency, type = self.currency_convertor()
-        print(f"Converted INR to {type}, amount is {currency}")
+        currency = self.currency_convertor()
+        print(f"Converted INR to {self.currency_type}, amount is {currency}")
     
 doller_money = CurrencyConvert(1023000, 'Doller')
 doller_money.display_currency()
@@ -154,8 +172,8 @@ Now its easy to add any other payment method. link crypto or debit card payments
 You might think, The code looks pretty big now, but even if you want to add another method now, you dont need to change anything in existing code. just create a new class and simply create its object.
 
 ## Liskov Substitution Principle (LSP)
-Any Derived class should be able to substitute its parent class without consumer knowing it. The behavior of a subclass should be consistent with the behavior of the parent class. in simple words a subclass or derived class must able to do all the things that a parent class do.
-let's suppose we have a bird class in which two methods are there, one is fly another is eat, now there is two derived classes one is parrot & second is ostrich, so parrot class can perform both fly & eat, but ostrich cannot fly. Here LSP failed.
+Any Derived class should be able to substitute its parent class without consumer knowing it. The behavior of a subclass should be consistent with the behavior of the parent class. in simple words a subclass or derived class must able to do all the things that a parent class do.LSP is about **behavioral correctness in substitution**.  
+Example : let's suppose we have a bird class in which two methods are there, one is fly another is eat, now there is two derived classes one is parrot & second is ostrich, so parrot class can perform both fly & eat, but ostrich cannot fly. Here LSP failed.
 
 ```python
 from abc import ABC, abstractmethod
@@ -223,6 +241,94 @@ ostrich.eating_bird()   # Output: Non-Flying Bird Eats
 ostrich.running_bird()  # Output: Non-Flying Bird Runs
 ```
 The Bird base class provides a contract (eating_bird), and both FlyingBirds and NonFlyingBird subclasses implement it appropriately. This ensures that both subclasses can replace the Bird class without breaking any functionality.
+
+Lets consider one more example with real time application. Imagine you're building an e-commerce app (like Amazon or Flipkart), and you support different payment methods: 
+- Credit Card
+- UPI
+- Cash on Delivery (COD)
+
+```python
+class Payment:
+    def pay(self, amount):
+        print(f"Paying ₹{amount}")
+
+class CreditCardPayment(Payment):
+    def pay(self, amount):
+        print(f"Paid ₹{amount} via Credit Card")
+
+class UPIPayment(Payment):
+    def pay(self, amount):
+        print(f"Paid ₹{amount} via UPI")
+
+class CODPayment(Payment):
+    def pay(self, amount):
+        raise Exception("Can't process COD online!")
+
+def process_payment(payment: Payment):
+    payment.pay(500)
+
+process_payment(UPIPayment())        # ✅ Works
+process_payment(CreditCardPayment()) # ✅ Works
+process_payment(CODPayment())        # ❌ Raises error
+
+```
+This breaks LSP. Even though CODPayment is a subclass of Payment, you cannot substitute it safely in place of the parent.
+Real-World Consequences: 
+- The app crashes if someone tries to use COD through this flow.
+- A developer might assume all Payment types are safe to use, but they’re not.
+- The interface (pay()) promises something COD cannot deliver
+
+Fixing It with Better Design: 
+
+```python
+# Base class (general type)
+class Payment:
+    pass
+
+# Subclass for online payments only
+class OnlinePayment(Payment):
+    def pay(self, amount):
+        print(f"Processing online payment of ₹{amount}")
+
+# Concrete subclasses that follow LSP
+class CreditCardPayment(OnlinePayment):
+    def pay(self, amount):
+        print(f"Paid ₹{amount} via Credit Card")
+
+class UPIPayment(OnlinePayment):
+    def pay(self, amount):
+        print(f"Paid ₹{amount} via UPI")
+
+# Separate class for Cash on Delivery
+class CODPayment(Payment):
+    def confirm_order(self):
+        print("Order confirmed. Please pay ₹amount in cash on delivery.")
+
+# Function that works only with OnlinePayment types
+def process_online_payment(payment: OnlinePayment, amount):
+    payment.pay(amount)
+
+# Function that handles COD orders
+def process_cod_order(payment: CODPayment):
+    payment.confirm_order()
+
+# ✅ Working correctly
+credit_card = CreditCardPayment()
+upi = UPIPayment()
+cod = CODPayment()
+
+# LSP-compliant usage
+process_online_payment(credit_card, 500)   # ✅ OK
+process_online_payment(upi, 300)           # ✅ OK
+
+# COD handled separately
+process_cod_order(cod)                     # ✅ OK
+
+```
+This way:
+- COD is not forced to pretend to be an online payment method.
+- Only classes that can truly pay online are substituted in this flow.
+- LSP is preserved ✅
 
 ## Interface Segregation Principle (ISP)
 This principle advocates that an interface should only include methods that are relevant to the implementing class. in other words, it goes against Fat or Bulky interfaces in class instead having small interfaces with group of methods each serving a perticular purpose.
